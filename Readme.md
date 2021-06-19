@@ -8,17 +8,44 @@ This is an unofficial JVM library for Oura Cloud API written in Kotlin, which ca
 
 Install
 ====================
-Gradle(NOT PUBLISHED YET):
+
+
+
+Gradle:
+
+1. Add the JitPack repository to your build file.
+   Add it in your root build.gradle at the end of repositories:
 ```
-implementation "dev.pgordon:oura-ring-api:0.0.1"
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+2. Add the dependency
+```
+dependencies {
+    implementation 'com.github.pavelgordon:oura-ring-api:v0.0.1'
+}
 ```
 
-Maven(NOT PUBLISHED YET)::
+Maven:
+1. Add the JitPack repository to your build file
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+2. Add the dependency
 ```xml
 <dependency>
-    <groupId>dev.pgordon</groupId>
-    <artifactId>oura-ring-api</artifactId>
-    <version>0.0.1</version>
+  <groupId>com.github.pavelgordon</groupId>
+  <artifactId>oura-ring-api</artifactId>
+  <version>v0.0.1</version>
 </dependency>
 ```
 Authorisation

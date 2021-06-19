@@ -2,10 +2,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.5.0"
+    id("maven")
 }
 
-group = "dev.pgordon"
-version = "0.0.1-SNAPSHOT"
+group = "com.github.pavelgordon"
+version = "0.0.1"
 
 repositories {
     mavenCentral()
