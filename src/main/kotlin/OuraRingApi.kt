@@ -7,14 +7,11 @@ import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.jackson.responseObject
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.text.SimpleDateFormat
-import java.time.LocalDate
 import java.time.LocalDate.now
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_DATE
 
 
-class OuraRingApi(private val personalAccessToken: String) {
+class OuraRingApi(personalAccessToken: String) {
 
     private val mapper = ObjectMapper().registerKotlinModule()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -27,11 +24,10 @@ class OuraRingApi(private val personalAccessToken: String) {
         FuelManager.instance.baseParams = listOf("access_token" to personalAccessToken)
     }
 
-
     fun getSleep(
         dateFrom: String = now().minusDays(7).format(ISO_DATE),
         dateTo: String = now().format(ISO_DATE)
-    ): Pair<List<Summary.Sleep>, Error?> {
+    ): List<Summary.Sleep> {
         val response = Fuel.get(
             "/sleep", listOf(
                 "start" to dateFrom,
@@ -40,18 +36,17 @@ class OuraRingApi(private val personalAccessToken: String) {
         ).responseObject<Sleeps>(mapper)
 
         if (response.second.statusCode != 200) {
-            return Pair(listOf(), Error(response.second.responseMessage))
+            throw OuraRingApiException(response.second.responseMessage)
         }
 
-        val sleep = response.third.component1()!!.sleep
-        return Pair(sleep, null)
+        return response.third.component1()!!.sleep
     }
 
 
     fun getActivity(
         dateFrom: String = now().minusDays(7).format(ISO_DATE),
         dateTo: String = now().format(ISO_DATE)
-    ): Pair<List<Summary.Activity>, Error?> {
+    ): List<Summary.Activity> {
         val response = Fuel.get(
             "/activity", listOf(
                 "start" to dateFrom,
@@ -59,16 +54,16 @@ class OuraRingApi(private val personalAccessToken: String) {
             )
         ).responseObject<Activities>(mapper)
         if (response.second.statusCode != 200) {
-            return Pair(listOf(), Error(response.second.responseMessage))
+            throw OuraRingApiException(response.second.responseMessage)
         }
 
-        return Pair(response.third.component1()!!.activity, null)
+        return response.third.component1()!!.activity
     }
 
     fun getReadiness(
         dateFrom: String = now().minusDays(7).format(ISO_DATE),
         dateTo: String = now().format(ISO_DATE)
-    ): Pair<List<Summary.Readiness>, Error?> {
+    ): List<Summary.Readiness> {
         val response = Fuel.get(
             "/readiness", listOf(
                 "start" to dateFrom,
@@ -76,12 +71,14 @@ class OuraRingApi(private val personalAccessToken: String) {
             )
         ).responseObject<Readiness>(mapper)
         if (response.second.statusCode != 200) {
-            return Pair(listOf(), Error(response.second.responseMessage))
+            throw OuraRingApiException(response.second.responseMessage)
         }
 
-        return Pair(response.third.component1()!!.readiness, null)
+        return response.third.component1()!!.readiness
     }
 }
+
+class OuraRingApiException(message: String) : Throwable(message)
 
 data class Sleeps(val sleep: List<Summary.Sleep>)
 data class Activities(val activity: List<Summary.Activity>)
@@ -99,7 +96,7 @@ sealed class Summary {
         /**
          * One day prior to the date when the sleep period ended. Note: this is one day before the date that is shown in the apps.
          */
-        var summaryDate: String,
+        val summaryDate: String,
         /**
          * Index of the sleep period among sleep periods with the same summary_date, where 0 = first sleep period of the day.
          */
@@ -259,25 +256,25 @@ sealed class Summary {
         /**
          * Date when the activity period started. Oura activity period is from 4 AM to 3:59 AM user's local time.
          */
-        var summaryDate: String,
+        val summaryDate: String,
         /**
          * UTC time when the activity day began. Oura activity day is usually from 4AM to 4AM local time.
          */
-        var dayStart: String,//datetime?
+        val dayStart: String,//datetime?
         /**
          * Format: Date time UTC time when the activity day ended. Oura activity day is usually from 4AM to 4AM local time.
          */
-        var dayEnd: String,
+        val dayEnd: String,
         /**
          * Unit: Minutes
         Timezone offset from UTC as minutes. For example, EEST (Eastern European Summer Time, +3h) is 180. PST (Pacific Standard Time, -8h) is -480. Note that timezone information is also available in the datetime values themselves, see for example.bedtime_start
          */
-        var timezone: Int,
+        val timezone: Int,
         /**
          * Range: 1-100, or 0 if not available.
         Activity score provides an estimate how well recent physical activity has matched ring user's needs. It is calculated as a weighted average of activity score contributors that represent one aspect of suitability of the activity each. The contributor values are also available as separate parameters.
          */
-        var score: Int,
+        val score: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates how well the ring user has managed to avoid of inactivity (sitting or standing still) during last 24 hours. The more inactivity, the lower contributor value.
@@ -286,7 +283,7 @@ sealed class Summary {
 
         The weight of activity.score_stay_active in activity score calculation is 0.15.
          */
-        var scoreStayActive: Int,
+        val scoreStayActive: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates how well the ring user has managed to avoid long periods of inactivity (sitting or standing still) during last 24 hours. The contributor includes number of continuous inactive periods of 60 minutes or more (excluding sleeping). The more long inactive periods, the lower contributor value.
@@ -295,14 +292,14 @@ sealed class Summary {
 
         The weight of activity.score_move_every_hour in activity score calculation is 0.10.
          */
-        var scoreMoveEveryHour: Int,
+        val scoreMoveEveryHour: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates how often the ring user has reached his/her daily activity target during seven last days (100 = six or seven times, 95 = five times).
 
         The weight of activity.score_meet_daily_targets in activity score calculation is 0.25.
          */
-        var scoreMeetDailyTargets: Int,
+        val scoreMeetDailyTargets: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates how regularly the ring user has had physical exercise the ring user has got during last seven days.
@@ -311,7 +308,7 @@ sealed class Summary {
 
         The weight of activity.score_training_frequency in activity score calculation is 0.10.
          */
-        var scoreTrainingFrequency: Int,
+        val scoreTrainingFrequency: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates how much physical exercise the ring user has got during last seven days.
@@ -320,7 +317,7 @@ sealed class Summary {
 
         The weight of activity.score_training_volume in activity score calculation is 0.15.
          */
-        var scoreTrainingVolume: Int,
+        val scoreTrainingVolume: Int,
         /**
          * Range: 1-100, or 0 if not available.
         This activity score contributor indicates if the user has got enough recovery time during last seven days.
@@ -333,91 +330,91 @@ sealed class Summary {
 
         The weight of activity.score_recovery_time in activity score calculation is 0.25.
          */
-        var scoreRecoveryTime: Int,
+        val scoreRecoveryTime: Int,
         /**
          * Unit: meters
         Daily physical activity as equal meters i.e. amount of walking needed to get the same amount of activity.
          */
-        var dailyMovement: Int,
+        val dailyMovement: Int,
         /**
          * Unit: minutes
         Number of minutes during the day when the user was not wearing the ring. Can be used as a proxy for data accuracy, i.e. how well the measured physical activity represents actual total activity of the ring user.
          */
-        var nonWear: Int,
+        val nonWear: Int,
         /**
          * Unit: minutes
         Number of minutes during the day spent resting i.e. sleeping or lying down (average MET level of the minute is below 1.05).
          */
-        var rest: Int,
+        val rest: Int,
         /**
          * Unit: minutes
         Number of inactive minutes (sitting or standing still, average MET level of the minute between 1.05 and 2) during the day.
          */
-        var inactive: Int,
+        val inactive: Int,
         /**
          * Type: Int
         Number of continuous inactive periods of 60 minutes or more during the day.
          */
-        var inactivityAlerts: Int,
+        val inactivityAlerts: Int,
         /**
          * Unit: minutes
         Number of minutes during the day with low intensity activity (e.g. household work, average MET level of the minute between 2 and age dependent limit).
          */
-        var low: Int,
+        val low: Int,
         /**
          * Unit: minutes
         Number of minutes during the day with medium intensity activity (e.g. walking). The upper and lower MET level limits for medium intensity activity depend on user's age and gender.
          */
-        var medium: Int,
+        val medium: Int,
         /**
          * Unit: minutes
         Number of minutes during the day with high intensity activity (e.g. running). The lower MET level limit for high intensity activity depends on user's age and gender.
          */
-        var high: Int,
+        val high: Int,
         /**
          * Total number of steps registered during the day.
          */
-        var steps: Int,
+        val steps: Int,
         /**
          * kilocalories
         Total energy consumption during the day including Basal Metabolic Rate in kilocalories.
          */
-        var calTotal: Int,
+        val calTotal: Int,
         /**
          * Unit: kilocalories
         Energy consumption caused by the physical activity of the day in kilocalories.
          */
-        var calActive: Int,
+        val calActive: Int,
         /**
          *  MET minutes
         Total MET minutes accumulated during inactive minutes of the day.
          */
-        var metMinInactive: Int,
+        val metMinInactive: Int,
         /**
          * Unit: MET minutes
         Total MET minutes accumulated during low intensity activity minutes of the day.
          */
-        var metMinLow: Int,
+        val metMinLow: Int,
         /**
          * Unit: MET minutes
         Total MET minutes accumulated during medium and high intensity activity minutes of the day.
          */
-        var metMinMediumPlus: Int,
+        val metMinMediumPlus: Int,
         /**
          * Unit: MET minutes
         Total MET minutes accumulated during medium intensity activity minutes of the day.
          */
-        var metMinMedium: Int,
+        val metMinMedium: Int,
         /**
          * Unit: MET minutes
         Total MET minutes accumulated during high intensity activity minutes of the day.
          */
-        var metMinHigh: Int,
+        val metMinHigh: Int,
         /**
          * Type: Float
         Average MET level during the whole day.
          */
-        var averageMet: Double,
+        val averageMet: Double,
         /**
          * Type: String
         A string that contains one character for each starting five minutes of the activity period, so that the first period starts from 4 AM local time:
@@ -431,12 +428,12 @@ sealed class Summary {
         Example: 1112211111111111111111111111111111111111111111233322322223333323322222220000000000000000000000000000000000000000000000000000000233334444332222222222222322333444432222222221230003233332232222333332333333330002222222233233233222212222222223121121111222111111122212321223211111111111111111
          */
         @JsonProperty("class_5min")
-        var class5Min: String,
+        val class5Min: String,
         /**
          * Average MET level for each minute of the activity period, starting from 4 AM local time.
          */
         @JsonProperty("met_1min")
-        var met1Min: List<Double>,
+        val met1Min: List<Double>,
         /**
          * Range: 0-4
         Note: Missing for days before Rest Mode was available.
@@ -448,7 +445,7 @@ sealed class Summary {
         3: Entering recovery
         4: Recovering
          */
-        var restModeState: Int
+        val restModeState: Int
     )
 
     /**
@@ -458,48 +455,48 @@ sealed class Summary {
         /**
          * One day prior to the date when the sleep period (that this readiness score takes into account) ended. Note: this is one day before the date that is shown in the apps.
          */
-        var summaryDate: String,
+        val summaryDate: String,
         /**
          * Index of the sleep period among sleep periods with the same summary_date, where 0 = first sleep period of the day. Each readinesss calculation is associated with a sleep period.
          */
-        var periodId: Int,
+        val periodId: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var score: Int,
+        val score: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scorePreviousNight: Int,
+        val scorePreviousNight: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scoreSleepBalance: Int,
+        val scoreSleepBalance: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scorePreviousDay: Int,
+        val scorePreviousDay: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scoreActivityBalance: Int,
+        val scoreActivityBalance: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scoreRestingHr: Int,
+        val scoreRestingHr: Int,
         /**
          * Range: 1-100, or 0 if not available.
          * Note: May be missing. Not available for days before HRV was part of readiness score.
          */
-        var scoreHrvBalance: Int,
+        val scoreHrvBalance: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scoreRecoveryIndex: Int,
+        val scoreRecoveryIndex: Int,
         /**
          * Range: 1-100, or 0 if not available.
          */
-        var scoreTemperature: Int,
+        val scoreTemperature: Int,
         /**
          * Range: 0-4
          * Note: Missing for days before Rest Mode was available. <br/>
@@ -510,6 +507,6 @@ sealed class Summary {
          * 3: Entering recovery
          * 4: Recovering
          */
-        var restModeState: Int,
+        val restModeState: Int,
     )
 }

@@ -26,7 +26,7 @@ allprojects {
 2. Add the dependency
 ```
 dependencies {
-    implementation 'com.github.pavelgordon:oura-ring-api:v0.0.1'
+    implementation 'com.github.pavelgordon:oura-ring-api:v0.0.2'
 }
 ```
 
@@ -45,7 +45,7 @@ Maven:
 <dependency>
   <groupId>com.github.pavelgordon</groupId>
   <artifactId>oura-ring-api</artifactId>
-  <version>v0.0.1</version>
+  <version>v0.0.2</version>
 </dependency>
 ```
 Authorisation
@@ -77,12 +77,13 @@ internal class OuraRingApiTest {
         // scoreRem=74, scoreDeep=96, scoreAlignment=22, total=26100, duration=32160, awake=6060, light=13950, rem=5460, 
         // deep=6690, onsetLatency=480, restless=34, efficiency=81, midpointTime=15840, hrLowest=48, hrAverage=55.11, rmssd=52, 
         // breathAverage=13, temperatureDelta=-0.14, hypnogram5Min="554444", hr5Min= [66,65,64])], null)
-
-
-        // api.getSleep().first is an actual sleep data, empty list if error has occured
-        // api.getSleep().second is an optional error message(e.g. Unauthorized)
-        println(println(api.getSleep().first))
-        println(println(api.getSleep().second))
+       
+       try{
+           //error handling in case the network call to Oura Ring api fails(optional)
+           api.getSleep()
+       }catch (e: OuraRingApiException){
+           println(e)
+       }
         
         //check out the Summary.Sleep class which has an explanation for every field(e.g. sleep score)
     }
