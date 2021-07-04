@@ -1,3 +1,4 @@
+package dev.gordon.ouraringapi
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.text.SimpleDateFormat
 import java.time.LocalDate.now
 import java.time.format.DateTimeFormatter.ISO_DATE
-
 
 class OuraRingApi(personalAccessToken: String) {
 

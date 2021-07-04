@@ -1,3 +1,5 @@
+import dev.gordon.ouraringapi.OuraRingApi
+import dev.gordon.ouraringapi.OuraRingApiException
 import org.junit.Test
 
 internal class OuraRingApiTest{
